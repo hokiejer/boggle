@@ -137,6 +137,8 @@ int main()
   }
   for(i=0;i<16;i++) {
     board_letter_counts[tiles[i]-'a']++;
+    if(tiles[i] == 'q')
+      board_letter_counts['u'-'a']++;
   }
   printf("Board Letter Counts: ");
   for(i=0;i<26;i++)
@@ -147,7 +149,8 @@ int main()
   prune_wordlist_with_lettercounts(words, &wordcount, words_lettercounts, board_letter_counts);
   printf("Revised word count after considering letter counts = %d\n", wordcount);
 
-
+  for(i=0;i<wordcount;i++)
+    printf("words[%d] == %s\n",i,words[i]);
 
 
 
