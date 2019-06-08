@@ -24,7 +24,54 @@ char neighbors[16][9] = {
   {10,11,14,-1,-1,-1,-1,-1,-1}
 };
 
-int printwords(char words[MAX][17], int wordcount)
+
+void trim_qu_in_wordlist(
+  char words[MAX][17], 
+  int wordcount) 
+{
+  int index = 0;
+  int i;
+  char *location;
+
+  for(i=0;i<wordcount;i++)
+  {
+    if (location = strstr(words[i],"qu"))
+    {
+      do {
+        location++;
+        *location = *(location+1);
+      } while (*location != '\0');
+    }
+  }
+}
+
+
+void restore_qu_in_wordlist(
+  char words[MAX][17], 
+  int wordcount) 
+{
+  int index = 0;
+  int i;
+  char *location, *curptr;
+  int length;
+
+  for(i=0;i<wordcount;i++)
+  {
+    if (location = strstr(words[i],"q"))
+    {
+      length = (int) strlen(words[i]);
+      curptr = &(words[i][length]);
+      do {
+        *curptr = *(curptr-1);
+        curptr--;
+      } while (curptr != location);
+      *(location+1) = 'u';
+    }
+  }
+}
+
+
+void printwords(char words[MAX][17], int wordcount)
 {
   int i;
 
@@ -44,7 +91,7 @@ int readwords(char words[MAX][17])
   int wordcount = 0;
 
   // Read in the word list
-  fp = fopen("./words.final", "r");
+  fp = fopen("./wordlist.final", "r");
   if (fp == NULL)
     exit(EXIT_FAILURE);
 
@@ -257,22 +304,19 @@ void prune_wordlist_to_found_words(
 
 int main() 
 {
-  char words[MAX][17]; // Word storage
+  char words[MAX][17];              // Word storage
   char words_lettercounts[MAX][26]; // Letter counts per word
-  int wordcount = 0; // Number of words
-
-  // Tile information
-  char tiles[16];
-
-  // Letter counts
-  char board_letter_counts[26];
-
-  // Temporary variables
-  int i;
+  int wordcount = 0;                // Number of words
+  char tiles[16];                   // Tile information
+  char board_letter_counts[26];     // Letter counts
+  int i;                            // Temporary variable
 
   // Read in the word list
   wordcount = readwords(words);
   printf("Initial word count = %d\n", wordcount);
+
+  // Change all "qu" to "q"
+  trim_qu_in_wordlist(words, wordcount);
 
   // Count each letter in each word in our word list
   compute_lettercounts(words,wordcount,words_lettercounts);
@@ -297,12 +341,24 @@ int main()
   //printf("\n");
 
   // Prune the word list given the letter counts for this board
-  prune_wordlist_with_lettercounts(words, &wordcount, words_lettercounts, board_letter_counts);
+  prune_wordlist_with_lettercounts(
+    words, 
+    &wordcount, 
+    words_lettercounts, 
+    board_letter_counts
+  );
   printf("Revised word count after considering letter counts = %d\n", wordcount);
 
   // Find the words
   prune_wordlist_to_found_words(words,&wordcount,tiles);
   printf("Total words found = %d\n", wordcount);
+
+  // Change all "q" back to "qu"
+  restore_qu_in_wordlist(words, wordcount);
+
+  // Print the word list
+  printf("\nWord list:\n");
+  printwords(words, wordcount);
 
   return(0);
 }
