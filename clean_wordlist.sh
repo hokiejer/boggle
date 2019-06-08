@@ -69,6 +69,7 @@ fiance
 fiancee
 fiances
 fiancees
+machs
 EndOfMessage
 
 cat wordlist.temp | grep -v '^ *$' | sort | uniq > wordlist.final

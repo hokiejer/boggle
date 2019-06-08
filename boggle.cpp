@@ -24,6 +24,16 @@ char neighbors[16][9] = {
   {10,11,14,-1,-1,-1,-1,-1,-1}
 };
 
+char letter_scores[26] = {
+  1, 2, 4, 2, 1, 4, 3, 3, 1, 10, 5, 2, 4, 2, 1, 4, 10, 1, 1, 1, 2, 5, 4, 8, 3, 10
+};
+
+void logindent(int depth)
+{
+  int i;
+  for(i=0;i<depth;i++) printf("  ");
+}
+
 
 void trim_qu_in_wordlist(
   char words[MAX][17], 
@@ -60,7 +70,7 @@ void restore_qu_in_wordlist(
     if (location = strstr(words[i],"q"))
     {
       length = (int) strlen(words[i]);
-      curptr = &(words[i][length]);
+      curptr = &(words[i][length])+1;
       do {
         *curptr = *(curptr-1);
         curptr--;
@@ -71,12 +81,18 @@ void restore_qu_in_wordlist(
 }
 
 
-void printwords(char words[MAX][17], int wordcount)
+void printwords(char words[MAX][17], int wordcount, int spacer)
 {
   int i;
 
-  for(i=0;i<wordcount;i++)
+  for(i=0;i<wordcount;i++) {
     printf("%s\n",words[i]);
+    if (spacer > 0)
+    {
+      if (i % spacer == 0)
+        printf("\n");
+    }
+  }
   printf("\n");
 }
 
@@ -142,7 +158,7 @@ void prune_wordlist_with_lettercounts(char words[MAX][17], int *wordcount, char 
   for(i=0;i<(*wordcount);i++)
   {
     safe = 1;
-    //printf("Considering word: %s\n",words[i]);
+    printf("Considering word: %s\n",words[i]);
     for(j=0;j<26;j++)
     {
       //printf("%d",j);
@@ -153,7 +169,7 @@ void prune_wordlist_with_lettercounts(char words[MAX][17], int *wordcount, char 
         break;
       }
     }
-    //printf("\n");
+    printf("\n");
     if (safe)
     {
       //printf("ADDING TO LIST\n");
@@ -185,59 +201,76 @@ int wordsearch(char *word,char path[16],int index,char tiles[16])
 {
   int neighborindex = 0;
   char nexttry;
-  int i;
+  int i,j;
+  int repeat;
   int found;
   char priortile;
   char current_tile_index = path[index-1];
   char current_tile = tiles[current_tile_index];
 
-  //for(i=0;i<index;i++) printf("  ");
-  //printf("===tiles[%d], letter == %c, index == %d\n",current_tile_index,current_tile,index);
+  for(i=0;i<index;i++) printf("  ");
+  printf("===tiles[%d], letter == %c, index == %d\n",current_tile_index,current_tile,index);
 
   // Check the current letter
   if (tiles[current_tile_index] != word[index-1])
   {
-    //for(i=0;i<index;i++) printf("  ");
-    //printf("LETTER MISMATCH!  tile == %c  word letter == %c\n",current_tile,word[index-1]);
+    logindent(index);
+    printf("LETTER MISMATCH!  tile == %c  word letter == %c\n",current_tile,word[index-1]);
     return(0);
   } else {
-    //for(i=0;i<index;i++) printf("  ");
-    //printf("LETTER MATCH.  STILL GOING!\n");
+    logindent(index);
+    printf("LETTER MATCH.  STILL GOING!\n");
   }
 
   // Check if this tile was previously seen
   for(priortile=0;priortile<(index-1);priortile++)
   {
-    //for(i=0;i<index;i++) printf("  ");
-    //printf("Checking past tiles: path[%d] == %d\n",priortile,path[priortile]);
+    logindent(index);
+    printf("Checking past tiles: path[%d] == %d\n",priortile,path[priortile]);
     if (path[index] == path[priortile])
     {
-      //for(i=0;i<index;i++) printf("  ");
-      //printf("This tile was previously seen!\n");
+      logindent(index);
+      printf("This tile was previously seen!\n");
       return(0);
     }
   }
-  //for(i=0;i<index;i++) printf("  ");
-  //printf("This tile was not previously seen!\n");
+  logindent(index);
+  printf("This tile was not previously seen!\n");
 
   // If we're out of letters, then we've found the word!
   if (index == strlen(word))
   {
     return(1);
   } else {
-    //for(i=0;i<index;i++) printf("  ");
-    //printf("Not done with word.  Looking for the next letter.\n");
+    logindent(index);
+    printf("Not done with word.  Looking for the next letter.\n");
   }
 
   while ((nexttry = neighbors[current_tile_index][neighborindex++]) >= 0)
   {
-    // this block must be only if path doesn't contain nexttry (I think)
-    //for(i=0;i<index;i++) printf("  ");
-    //printf("Considering neighbor %d (%c)\n",nexttry,tiles[nexttry]);
-    path[index] = nexttry;
-    found = wordsearch(word,path,index+1,tiles);
-    if (found)
-      return(1);
+    logindent(index);
+    printf("Considering neighbor %d (%c)\n",nexttry,tiles[nexttry]);
+
+    // Look for reuse of tiles
+    repeat = 0;
+    for(j=0;j<index;j++)
+    {
+      if(path[j] == nexttry)
+      {
+        logindent(index);
+        printf("No dice.  Tile %d has already been used.\n",nexttry);
+        repeat = 1;
+        break;
+      }
+    }
+    if(repeat == 0)
+    {
+
+      path[index] = nexttry;
+      found = wordsearch(word,path,index+1,tiles);
+      if (found)
+        return(1);
+    }
   }
   return(0);
 }
@@ -250,7 +283,7 @@ int find_word_in_board(char *word, char *tiles)
   int i, j;
   int found = 0;
 
-  //printf("Looking for word in board\n");
+  printf("Looking for word in board\n");
   for(i=0;i<16;i++)
   {
     if (tiles[i] == word[0])
@@ -262,19 +295,19 @@ int find_word_in_board(char *word, char *tiles)
       found = wordsearch(word,path,index,tiles);
       if (found) 
       {
-        //j = 0;
-        //while (path[j] > 0)
-          //printf("%c ",tiles[path[j++]]);
-        //printf("\n");
+        j = 0;
+        while (path[j] > 0)
+          printf("%c ",tiles[path[j++]]);
+        printf("\n");
         break;
       }
     }
   }
   if(found) {
     return(1);
-    //printf ("FOUND!\n\n");
+    printf ("FOUND!\n\n");
   } else {
-    //printf ("NOT FOUND!\n\n");
+    printf ("NOT FOUND!\n\n");
     return(0);
   }
 }
@@ -290,15 +323,74 @@ void prune_wordlist_to_found_words(
 
   for(i=0;i<(*wordcount);i++)
   {
-    //printboard(tiles);
-    //printf("words[%d] == %s\n",i,words[i]);
+    printboard(tiles);
+    printf("words[%d] == %s\n",i,words[i]);
     if(find_word_in_board(words[i],tiles))
     {
-      //printf("WORD FOUND IN BOARD: %s\n",words[i]);
+      printf("WORD FOUND IN BOARD: %s\n",words[i]);
       strcpy(words[index++],words[i]);
     }
   }
   *wordcount = index-1;
+}
+
+
+static int compare_standard_boggle(const void *a, const void *b)
+{
+  int len_a = strlen((char *) a);
+  int len_b = strlen((char *) b);
+  if (len_a > len_b)
+    return(1);
+  else 
+  {
+    if (len_a == len_b)
+      return(0);
+    else
+      return(-1);
+  }
+}
+
+int score_zynga_no_bonus(char *word)
+{
+  char *letter = word;
+  int score = 0;
+  while (*letter != '\0')
+    score += letter_scores[*(letter++)-'a'];
+  return(score);
+}
+
+
+static int compare_zynga_no_bonus(const void *a, const void *b)
+{
+  int len_a = score_zynga_no_bonus((char *) a);
+  int len_b = score_zynga_no_bonus((char *) b);
+  if (len_a > len_b)
+    return(1);
+  else 
+  {
+    if (len_a == len_b)
+      return(0);
+    else
+      return(-1);
+  }
+}
+
+
+void sort(char words[MAX][17], int wordcount, int scheme)
+{
+  switch(scheme) {
+    case 0:
+      printf("Standard Boggle scheme.\n");
+      qsort(words,wordcount,17,compare_standard_boggle); 
+      break;
+    case 1:
+      printf("Basic Zynga scheme.\n");
+      qsort(words,wordcount,17,compare_zynga_no_bonus); 
+      break;
+    default:
+      printf("Scheme not found.\n");
+  }
+
 }
 
 
@@ -310,6 +402,7 @@ int main()
   char tiles[16];                   // Tile information
   char board_letter_counts[26];     // Letter counts
   int i;                            // Temporary variable
+  int scheme = 1;                   // Default to normal Boggle
 
   // Read in the word list
   wordcount = readwords(words);
@@ -335,10 +428,6 @@ int main()
   for(i=0;i<16;i++) {
     board_letter_counts[tiles[i]-'a']++;
   }
-  //printf("Board Letter Counts: ");
-  //for(i=0;i<26;i++)
-    //printf("%d",board_letter_counts[i]);
-  //printf("\n");
 
   // Prune the word list given the letter counts for this board
   prune_wordlist_with_lettercounts(
@@ -352,13 +441,27 @@ int main()
   // Find the words
   prune_wordlist_to_found_words(words,&wordcount,tiles);
   printf("Total words found = %d\n", wordcount);
+  printwords(words, wordcount,0);
+
+  // Sort the words by score
+  if (scheme != 0)
+    sort(words,wordcount,scheme);
+
+  printf("\nPost Sort 1:\n");
+  printwords(words, wordcount,0);
 
   // Change all "q" back to "qu"
   restore_qu_in_wordlist(words, wordcount);
 
+  printf("\nPost U restoration:\n");
+  printwords(words, wordcount,0);
+
+  if (scheme == 0)
+    sort(words,wordcount,scheme);
+
   // Print the word list
   printf("\nWord list:\n");
-  printwords(words, wordcount);
+  printwords(words, wordcount,3);
 
   return(0);
 }
