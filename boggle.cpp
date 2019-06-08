@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define MAX 66000
+
+// For each index in "tiles", these are the adjacent indices
 char neighbors[16][9] = {
   {1,4,5,-1,-1,-1,-1,-1,-1},
   {0,2,4,5,6,-1,-1,-1,-1},
@@ -21,7 +24,17 @@ char neighbors[16][9] = {
   {10,11,14,-1,-1,-1,-1,-1,-1}
 };
 
-int readwords(char words[66000][17]) 
+int printwords(char words[MAX][17], int wordcount)
+{
+  int i;
+
+  for(i=0;i<wordcount;i++)
+    printf("%s\n",words[i]);
+  printf("\n");
+}
+
+
+int readwords(char words[MAX][17]) 
 {
   FILE *fp;
   size_t read;
@@ -48,7 +61,7 @@ int readwords(char words[66000][17])
   return(wordcount);
 }
 
-void compute_lettercounts(char words[66000][17], int wordcount, char words_lettercounts[66000][26])
+void compute_lettercounts(char words[MAX][17], int wordcount, char words_lettercounts[MAX][26])
 {
   int i,j;
   char *word;
@@ -73,7 +86,7 @@ void compute_lettercounts(char words[66000][17], int wordcount, char words_lette
   }
 }
 
-void prune_wordlist_with_lettercounts(char words[66000][17], int *wordcount, char words_lettercounts[66000][26], char board_letter_counts[26])
+void prune_wordlist_with_lettercounts(char words[MAX][17], int *wordcount, char words_lettercounts[MAX][26], char board_letter_counts[26])
 {
   int index = 0;
   int i,j;
@@ -127,42 +140,57 @@ int wordsearch(char *word,char path[16],int index,char tiles[16])
   char nexttry;
   int i;
   int found;
+  char priortile;
+  char current_tile_index = path[index-1];
+  char current_tile = tiles[current_tile_index];
 
-  for(i=0;i<index;i++) printf("  ");
-  printf("Word not found yet.  Still going.\n");
-  for(i=0;i<index;i++) printf("  ");
-  printf("tiles[%d] == %c\n",path[index-1],tiles[path[index-1]]);
+  //for(i=0;i<index;i++) printf("  ");
+  //printf("===tiles[%d], letter == %c, index == %d\n",current_tile_index,current_tile,index);
 
   // Check the current letter
-  if (tiles[path[index-1]] != word[index-1])
+  if (tiles[current_tile_index] != word[index-1])
   {
-    for(i=0;i<index;i++) printf("  ");
-    printf("LETTER MISMATCH!  tile == %c  word letter == %c\n",tiles[path[index-1]],word[index-1]);
+    //for(i=0;i<index;i++) printf("  ");
+    //printf("LETTER MISMATCH!  tile == %c  word letter == %c\n",current_tile,word[index-1]);
     return(0);
   } else {
-    for(i=0;i<index;i++) printf("  ");
-    printf("STILL GOING!\n");
+    //for(i=0;i<index;i++) printf("  ");
+    //printf("LETTER MATCH.  STILL GOING!\n");
   }
 
-  for(i=0;i<index;i++) printf("  ");
-  printf("In wordsearch, index == %d\n",index);
+  // Check if this tile was previously seen
+  for(priortile=0;priortile<(index-1);priortile++)
+  {
+    //for(i=0;i<index;i++) printf("  ");
+    //printf("Checking past tiles: path[%d] == %d\n",priortile,path[priortile]);
+    if (path[index] == path[priortile])
+    {
+      //for(i=0;i<index;i++) printf("  ");
+      //printf("This tile was previously seen!\n");
+      return(0);
+    }
+  }
+  //for(i=0;i<index;i++) printf("  ");
+  //printf("This tile was not previously seen!\n");
+
   // If we're out of letters, then we've found the word!
   if (index == strlen(word))
+  {
     return(1);
+  } else {
+    //for(i=0;i<index;i++) printf("  ");
+    //printf("Not done with word.  Looking for the next letter.\n");
+  }
 
-  for(i=0;i<index;i++) printf("  ");
-  printf("neighborindex == %d\n",neighborindex);
-  while ((nexttry = neighbors[path[index-1]][neighborindex++]) > 0)
+  while ((nexttry = neighbors[current_tile_index][neighborindex++]) >= 0)
   {
     // this block must be only if path doesn't contain nexttry (I think)
-    for(i=0;i<index;i++) printf("  ");
-    printf("So far, so good.  Trying neighbor %d (%c)\n",nexttry,tiles[nexttry]);
+    //for(i=0;i<index;i++) printf("  ");
+    //printf("Considering neighbor %d (%c)\n",nexttry,tiles[nexttry]);
     path[index] = nexttry;
     found = wordsearch(word,path,index+1,tiles);
     if (found)
       return(1);
-    for(i=0;i<index;i++) printf("  ");
-    printf("neighborindex == %d\n",neighborindex);
   }
   return(0);
 }
@@ -175,7 +203,7 @@ int find_word_in_board(char *word, char *tiles)
   int i, j;
   int found = 0;
 
-  printf("Looking for word in board\n");
+  //printf("Looking for word in board\n");
   for(i=0;i<16;i++)
   {
     if (tiles[i] == word[0])
@@ -187,28 +215,50 @@ int find_word_in_board(char *word, char *tiles)
       found = wordsearch(word,path,index,tiles);
       if (found) 
       {
-        j = 0;
-        while (path[j] > 0)
-          printf("%c ",tiles[path[j++]]);
-        printf("\n");
+        //j = 0;
+        //while (path[j] > 0)
+          //printf("%c ",tiles[path[j++]]);
+        //printf("\n");
         break;
       }
     }
   }
   if(found) {
     return(1);
-    printf ("FOUND!\n\n");
+    //printf ("FOUND!\n\n");
   } else {
-    printf ("NOT FOUND!\n\n");
+    //printf ("NOT FOUND!\n\n");
     return(0);
   }
 }
 
 
+void prune_wordlist_to_found_words(
+  char words[MAX][17], 
+  int *wordcount, 
+  char tiles[16])
+{
+  int index = 0;
+  int i;
+
+  for(i=0;i<(*wordcount);i++)
+  {
+    //printboard(tiles);
+    //printf("words[%d] == %s\n",i,words[i]);
+    if(find_word_in_board(words[i],tiles))
+    {
+      //printf("WORD FOUND IN BOARD: %s\n",words[i]);
+      strcpy(words[index++],words[i]);
+    }
+  }
+  *wordcount = index-1;
+}
+
+
 int main() 
 {
-  char words[66000][17]; // Word storage
-  char words_lettercounts[66000][26]; // Letter counts per word
+  char words[MAX][17]; // Word storage
+  char words_lettercounts[MAX][26]; // Letter counts per word
   int wordcount = 0; // Number of words
 
   // Tile information
@@ -250,12 +300,9 @@ int main()
   prune_wordlist_with_lettercounts(words, &wordcount, words_lettercounts, board_letter_counts);
   printf("Revised word count after considering letter counts = %d\n", wordcount);
 
-  for(i=0;i<wordcount;i++) {
-    printboard(tiles);
-    printf("words[%d] == %s\n",i,words[i]);
-    if(find_word_in_board(words[i],tiles))
-      printf("WORD FOUND IN BOARD!\n\n");
-  }
+  // Find the words
+  prune_wordlist_to_found_words(words,&wordcount,tiles);
+  printf("Total words found = %d\n", wordcount);
 
   return(0);
 }
