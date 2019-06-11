@@ -4,6 +4,11 @@
 
 #define MAX 66000
 
+struct Worddata {
+  char word[32];
+  int score;
+};
+
 // For each index in "tiles", these are the adjacent indices
 char neighbors[16][9] = {
   {1,4,5,-1,-1,-1,-1,-1,-1},
@@ -36,7 +41,7 @@ void logindent(int depth)
 
 
 void trim_qu_in_wordlist(
-  char words[MAX][17], 
+  Worddata worddata[MAX], 
   int wordcount) 
 {
   int index = 0;
@@ -45,7 +50,7 @@ void trim_qu_in_wordlist(
 
   for(i=0;i<wordcount;i++)
   {
-    if (location = strstr(words[i],"qu"))
+    if (location = strstr(worddata[i].word,"qu"))
     {
       do {
         location++;
@@ -57,7 +62,7 @@ void trim_qu_in_wordlist(
 
 
 void restore_qu_in_wordlist(
-  char words[MAX][17], 
+  Worddata worddata[MAX], 
   int wordcount) 
 {
   int index = 0;
@@ -67,10 +72,10 @@ void restore_qu_in_wordlist(
 
   for(i=0;i<wordcount;i++)
   {
-    if (location = strstr(words[i],"q"))
+    if (location = strstr(worddata[i].word,"q"))
     {
-      length = (int) strlen(words[i]);
-      curptr = &(words[i][length])+1;
+      length = (int) strlen(worddata[i].word);
+      curptr = &(worddata[i].word[length])+1;
       do {
         *curptr = *(curptr-1);
         curptr--;
@@ -81,12 +86,12 @@ void restore_qu_in_wordlist(
 }
 
 
-void printwords(char words[MAX][17], int wordcount, int spacer)
+void printwords(Worddata worddata[MAX], int wordcount, int spacer)
 {
   int i;
 
   for(i=0;i<wordcount;i++) {
-    printf("%s\n",words[i]);
+    printf("%s  (%d)\n",worddata[i].word,worddata[i].score);
     if (spacer > 0)
     {
       if (i % spacer == 0)
@@ -97,7 +102,7 @@ void printwords(char words[MAX][17], int wordcount, int spacer)
 }
 
 
-int readwords(char words[MAX][17]) 
+int readwords(Worddata worddata[MAX]) 
 {
   FILE *fp;
   size_t read;
@@ -116,7 +121,7 @@ int readwords(char words[MAX][17])
       index = (int) strlen(line);
       if (index >= 0)
         line[index-1] = '\0';
-      strcpy(words[wordcount++],line);
+      strcpy(worddata[wordcount++].word,line);
     }
   }
   free(line);
@@ -124,7 +129,7 @@ int readwords(char words[MAX][17])
   return(wordcount);
 }
 
-void compute_lettercounts(char words[MAX][17], int wordcount, char words_lettercounts[MAX][26])
+void compute_lettercounts(Worddata worddata[MAX], int wordcount, char words_lettercounts[MAX][26])
 {
   int i,j;
   char *word;
@@ -136,7 +141,7 @@ void compute_lettercounts(char words[MAX][17], int wordcount, char words_letterc
     for(j=0;j<26;j++)
       words_lettercounts[i][j] = 0;
 
-    word = words[i];
+    word = worddata[i].word;
     wordlength = strlen(word);
     //printf("word=%s, ",word);
     //printf("wordlength=%d, ",wordlength);
@@ -149,7 +154,7 @@ void compute_lettercounts(char words[MAX][17], int wordcount, char words_letterc
   }
 }
 
-void prune_wordlist_with_lettercounts(char words[MAX][17], int *wordcount, char words_lettercounts[MAX][26], char board_letter_counts[26])
+void prune_wordlist_with_lettercounts(Worddata worddata[MAX], int *wordcount, char words_lettercounts[MAX][26], char board_letter_counts[26])
 {
   int index = 0;
   int i,j;
@@ -158,7 +163,7 @@ void prune_wordlist_with_lettercounts(char words[MAX][17], int *wordcount, char 
   for(i=0;i<(*wordcount);i++)
   {
     safe = 1;
-    printf("Considering word: %s\n",words[i]);
+    //printf("Considering word: %s\n",worddata[i].word);
     for(j=0;j<26;j++)
     {
       //printf("%d",j);
@@ -169,11 +174,11 @@ void prune_wordlist_with_lettercounts(char words[MAX][17], int *wordcount, char 
         break;
       }
     }
-    printf("\n");
+    //printf("\n");
     if (safe)
     {
       //printf("ADDING TO LIST\n");
-      strcpy(words[index++],words[i]);
+      strcpy(worddata[index++].word,worddata[i].word);
     }
   }
   *wordcount = index-1;
@@ -263,6 +268,7 @@ int wordsearch(char *word,char path[16],int index,char tiles[16])
         break;
       }
     }
+
     if(repeat == 0)
     {
 
@@ -276,80 +282,6 @@ int wordsearch(char *word,char path[16],int index,char tiles[16])
 }
 
 
-int find_word_in_board(char *word, char *tiles)
-{
-  char path[16];
-  int index;
-  int i, j;
-  int found = 0;
-
-  printf("Looking for word in board\n");
-  for(i=0;i<16;i++)
-  {
-    if (tiles[i] == word[0])
-    {
-      for(j=0;j<16;j++)
-        path[j] = -1;
-      path[0] = i;
-      index = 1;
-      found = wordsearch(word,path,index,tiles);
-      if (found) 
-      {
-        j = 0;
-        while (path[j] > 0)
-          printf("%c ",tiles[path[j++]]);
-        printf("\n");
-        break;
-      }
-    }
-  }
-  if(found) {
-    return(1);
-    printf ("FOUND!\n\n");
-  } else {
-    printf ("NOT FOUND!\n\n");
-    return(0);
-  }
-}
-
-
-void prune_wordlist_to_found_words(
-  char words[MAX][17], 
-  int *wordcount, 
-  char tiles[16])
-{
-  int index = 0;
-  int i;
-
-  for(i=0;i<(*wordcount);i++)
-  {
-    printboard(tiles);
-    printf("words[%d] == %s\n",i,words[i]);
-    if(find_word_in_board(words[i],tiles))
-    {
-      printf("WORD FOUND IN BOARD: %s\n",words[i]);
-      strcpy(words[index++],words[i]);
-    }
-  }
-  *wordcount = index-1;
-}
-
-
-static int compare_standard_boggle(const void *a, const void *b)
-{
-  int len_a = strlen((char *) a);
-  int len_b = strlen((char *) b);
-  if (len_a > len_b)
-    return(1);
-  else 
-  {
-    if (len_a == len_b)
-      return(0);
-    else
-      return(-1);
-  }
-}
-
 int score_zynga_no_bonus(char *word)
 {
   char *letter = word;
@@ -360,43 +292,110 @@ int score_zynga_no_bonus(char *word)
 }
 
 
-static int compare_zynga_no_bonus(const void *a, const void *b)
+int find_word_in_board(Worddata *worddata, char *tiles, int scheme)
 {
-  int len_a = score_zynga_no_bonus((char *) a);
-  int len_b = score_zynga_no_bonus((char *) b);
-  if (len_a > len_b)
+  char path[16];
+  int index;
+  int i, j;
+  int found = 0;
+
+  printf("Looking for word in board\n");
+  for(i=0;i<16;i++)
+  {
+    if (tiles[i] == worddata->word[0])
+    {
+      for(j=0;j<16;j++)
+        path[j] = -1;
+      path[0] = i;
+      index = 1;
+      found = wordsearch(worddata->word,path,index,tiles);
+      if (found) 
+      {
+        printf("I'm in here, but the next line is sometimes blank???\n");
+        j = 0;
+        while (path[j] >= 0)
+          printf("%c ",tiles[path[j++]]);
+        printf("\n");
+
+        switch(scheme)
+        {
+          case 0:
+            printf("Standard Boggle scheme.\n");
+            worddata->score = strlen(worddata->word);
+            if (strstr(worddata->word,"q"))
+              (worddata->score)++;
+            printf("Score == %d\n",worddata->score);
+            break;
+          case 1:
+            printf("Basic Zynga scheme.\n");
+            worddata->score = score_zynga_no_bonus(worddata->word);
+            printf("Score == %d\n",worddata->score);
+            break;
+          default:
+            printf("Scheme not found.\n");
+        }
+        break;
+      }
+    }
+  }
+  if(found) {
+    printf ("FOUND!\n\n");
+    return(1);
+  } else {
+    printf ("NOT FOUND!\n\n");
+    return(0);
+  }
+}
+
+
+void prune_wordlist_to_found_words(
+  Worddata worddata[MAX], 
+  int *wordcount, 
+  char tiles[16],
+  int scheme)
+{
+  int index = 0;
+  int i;
+
+  for(i=0;i<(*wordcount);i++)
+  {
+    printboard(tiles);
+    printf("worddata[%d].word == %s\n",i,worddata[i].word);
+    if(find_word_in_board(&(worddata[i]),tiles,scheme))
+    {
+      printf("WORD FOUND IN BOARD: %s (%d)\n",worddata[i].word,worddata[i].score);
+      strcpy(worddata[index].word,worddata[i].word);
+      worddata[index++].score = worddata[i].score;
+    }
+  }
+  *wordcount = index-1;
+}
+
+
+static int compare_scores(const void *a, const void *b)
+{
+  int score_a = ((Worddata *) a)->score;
+  int score_b = ((Worddata *) b)->score;
+  if (score_a > score_b)
     return(1);
   else 
   {
-    if (len_a == len_b)
+    if (score_a == score_b)
       return(0);
     else
       return(-1);
   }
 }
 
-
-void sort(char words[MAX][17], int wordcount, int scheme)
+void sort(Worddata worddata[MAX], int wordcount)
 {
-  switch(scheme) {
-    case 0:
-      printf("Standard Boggle scheme.\n");
-      qsort(words,wordcount,17,compare_standard_boggle); 
-      break;
-    case 1:
-      printf("Basic Zynga scheme.\n");
-      qsort(words,wordcount,17,compare_zynga_no_bonus); 
-      break;
-    default:
-      printf("Scheme not found.\n");
-  }
-
+  qsort(worddata,wordcount,sizeof(Worddata),compare_scores); 
 }
 
 
 int main() 
 {
-  char words[MAX][17];              // Word storage
+  Worddata worddata[MAX];              // Word storage
   char words_lettercounts[MAX][26]; // Letter counts per word
   int wordcount = 0;                // Number of words
   char tiles[16];                   // Tile information
@@ -405,14 +404,14 @@ int main()
   int scheme = 1;                   // Default to normal Boggle
 
   // Read in the word list
-  wordcount = readwords(words);
+  wordcount = readwords(worddata);
   printf("Initial word count = %d\n", wordcount);
 
   // Change all "qu" to "q"
-  trim_qu_in_wordlist(words, wordcount);
+  trim_qu_in_wordlist(worddata, wordcount);
 
   // Count each letter in each word in our word list
-  compute_lettercounts(words,wordcount,words_lettercounts);
+  compute_lettercounts(worddata,wordcount,words_lettercounts);
 
   // Read in the tiles
   printf("Input the 16 tiles, left to right, top to bottom\n");
@@ -431,7 +430,7 @@ int main()
 
   // Prune the word list given the letter counts for this board
   prune_wordlist_with_lettercounts(
-    words, 
+    worddata, 
     &wordcount, 
     words_lettercounts, 
     board_letter_counts
@@ -439,29 +438,25 @@ int main()
   printf("Revised word count after considering letter counts = %d\n", wordcount);
 
   // Find the words
-  prune_wordlist_to_found_words(words,&wordcount,tiles);
+  prune_wordlist_to_found_words(worddata,&wordcount,tiles,scheme);
   printf("Total words found = %d\n", wordcount);
-  printwords(words, wordcount,0);
+  printwords(worddata, wordcount,0);
 
   // Sort the words by score
-  if (scheme != 0)
-    sort(words,wordcount,scheme);
+  sort(worddata,wordcount);
 
   printf("\nPost Sort 1:\n");
-  printwords(words, wordcount,0);
+  printwords(worddata, wordcount,0);
 
   // Change all "q" back to "qu"
-  restore_qu_in_wordlist(words, wordcount);
+  restore_qu_in_wordlist(worddata, wordcount);
 
   printf("\nPost U restoration:\n");
-  printwords(words, wordcount,0);
-
-  if (scheme == 0)
-    sort(words,wordcount,scheme);
+  printwords(worddata, wordcount,0);
 
   // Print the word list
   printf("\nWord list:\n");
-  printwords(words, wordcount,3);
+  printwords(worddata, wordcount,3);
 
   return(0);
 }
