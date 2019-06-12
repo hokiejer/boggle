@@ -4,15 +4,19 @@ char letter_scores[26] = {
   1, 2, 4, 2, 1, 4, 3, 3, 1, 10, 5, 2, 4, 2, 1, 4, 10, 1, 1, 1, 2, 5, 4, 8, 3, 10
 };
 
+char standard_boggle_length_bonus[12] = {0,0,1,1,2,3,0,0,0,0,0,0};
+char zynga_length_bonus[12] = {0,0,0,0,0,3,6,10,15,20,0,0};
+
 int score(Worddata *worddata,int scheme)
 {
   int myscore;
+  int length = strlen(worddata->word);
 
   switch(scheme)
   {
     case 0:
       printf("Standard Boggle scheme.\n");
-      myscore = strlen(worddata->word);
+      myscore = standard_boggle_length_bonus[length];
       if (strstr(worddata->word,"q"))
         myscore++;
       printf("Score == %d\n",worddata->score);
@@ -20,6 +24,7 @@ int score(Worddata *worddata,int scheme)
     case 1:
       printf("Basic Zynga scheme.\n");
       myscore = score_zynga_no_bonus(worddata);
+      myscore += zynga_length_bonus[length];
       printf("Score == %d\n",worddata->score);
       return myscore;
     default:
