@@ -198,8 +198,9 @@ void printboard(char tiles[16])
 }
 
 
-int wordsearch(char *word,char path[16],int index,char tiles[16],int scheme)
+int wordsearch(Worddata *worddata,char path[16],int index,char tiles[16],int scheme)
 {
+  char *word = worddata->word;
   int neighborindex = 0;
   char nexttry;
   int i,j;
@@ -266,13 +267,14 @@ int wordsearch(char *word,char path[16],int index,char tiles[16],int scheme)
       }
     }
 
+    // If no tile was reused
     if(repeat == 0)
     {
-
       path[index] = nexttry;
-      found = wordsearch(word,path,index+1,tiles,scheme);
+      found = wordsearch(worddata,path,index+1,tiles,scheme);
       if (found > bestscore)
         bestscore = found;
+      // We do not break here in case a better option is present
     }
   }
   return(bestscore);
@@ -293,7 +295,7 @@ int find_word_in_board(Worddata *worddata, char *tiles, int scheme)
       for(j=0;j<16;j++)
         path[j] = -1;
       path[0] = i;
-      found = wordsearch(worddata->word,path,1,tiles,scheme);
+      found = wordsearch(worddata,path,1,tiles,scheme);
       if (found) 
       {
         j = 0;
