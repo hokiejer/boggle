@@ -1,13 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#define MAX 66000
-
-struct Worddata {
-  char word[32];
-  int score;
-};
+#include "boggle.h"
 
 // For each index in "tiles", these are the adjacent indices
 char neighbors[16][9] = {
@@ -29,14 +20,19 @@ char neighbors[16][9] = {
   {10,11,14,-1,-1,-1,-1,-1,-1}
 };
 
-char letter_scores[26] = {
-  1, 2, 4, 2, 1, 4, 3, 3, 1, 10, 5, 2, 4, 2, 1, 4, 10, 1, 1, 1, 2, 5, 4, 8, 3, 10
-};
 
 void logindent(int depth)
 {
   int i;
   for(i=0;i<depth;i++) printf("  ");
+}
+
+
+void copypath(char target[], char source[])
+{
+  int i;
+  for(i=0;i<16;i++) 
+    target[i] = source[i];
 }
 
 
@@ -202,13 +198,14 @@ void printboard(char tiles[16])
 }
 
 
-int wordsearch(char *word,char path[16],int index,char tiles[16])
+int wordsearch(char *word,char path[16],int index,char tiles[16],int scheme)
 {
   int neighborindex = 0;
   char nexttry;
   int i,j;
   int repeat;
   int found;
+  int bestscore = 0;
   char priortile;
   char current_tile_index = path[index-1];
   char current_tile = tiles[current_tile_index];
@@ -273,29 +270,18 @@ int wordsearch(char *word,char path[16],int index,char tiles[16])
     {
 
       path[index] = nexttry;
-      found = wordsearch(word,path,index+1,tiles);
-      if (found)
-        return(1);
+      found = wordsearch(word,path,index+1,tiles,scheme);
+      if (found > bestscore)
+        bestscore = found;
     }
   }
-  return(0);
-}
-
-
-int score_zynga_no_bonus(char *word)
-{
-  char *letter = word;
-  int score = 0;
-  while (*letter != '\0')
-    score += letter_scores[*(letter++)-'a'];
-  return(score);
+  return(bestscore);
 }
 
 
 int find_word_in_board(Worddata *worddata, char *tiles, int scheme)
 {
   char path[16];
-  int index;
   int i, j;
   int found = 0;
 
@@ -307,11 +293,9 @@ int find_word_in_board(Worddata *worddata, char *tiles, int scheme)
       for(j=0;j<16;j++)
         path[j] = -1;
       path[0] = i;
-      index = 1;
-      found = wordsearch(worddata->word,path,index,tiles);
+      found = wordsearch(worddata->word,path,1,tiles,scheme);
       if (found) 
       {
-        printf("I'm in here, but the next line is sometimes blank???\n");
         j = 0;
         while (path[j] >= 0)
           printf("%c ",tiles[path[j++]]);
