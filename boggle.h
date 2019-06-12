@@ -10,5 +10,5 @@ struct Worddata {
   char path[16];
 };
 
-extern int score(Worddata *worddata);
-extern int score_zynga_no_bonus(char *word);
+extern int score(Worddata *worddata, int scheme);
+extern int score_zynga_no_bonus(Worddata *worddata);

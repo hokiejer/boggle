@@ -301,23 +301,7 @@ int find_word_in_board(Worddata *worddata, char *tiles, int scheme)
           printf("%c ",tiles[path[j++]]);
         printf("\n");
 
-        switch(scheme)
-        {
-          case 0:
-            printf("Standard Boggle scheme.\n");
-            worddata->score = strlen(worddata->word);
-            if (strstr(worddata->word,"q"))
-              (worddata->score)++;
-            printf("Score == %d\n",worddata->score);
-            break;
-          case 1:
-            printf("Basic Zynga scheme.\n");
-            worddata->score = score_zynga_no_bonus(worddata->word);
-            printf("Score == %d\n",worddata->score);
-            break;
-          default:
-            printf("Scheme not found.\n");
-        }
+        worddata->score = score(worddata,scheme);
         break;
       }
     }
