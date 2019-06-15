@@ -28,11 +28,22 @@ void logindent(int depth)
 }
 
 
-void copypath(char target[], char source[])
+void copypath(char target[], char source[], int length)
 {
   int i;
-  for(i=0;i<16;i++) 
+  for(i=0;i<length;i++) 
+  {
     target[i] = source[i];
+  }
+}
+
+
+void printpath(char path[], char tiles[], int length)
+{
+  int j;
+  for(j=0;j<length;j++)
+    printf("%d(%c) ",path[j],tiles[path[j]]);
+  printf("\n");
 }
 
 
@@ -206,6 +217,7 @@ int wordsearch(Worddata *worddata,char path[16],int index,char tiles[16],int sch
   int i,j;
   int repeat;
   int found;
+  int this_score;
   int bestscore = 0;
   char priortile;
   char current_tile_index = path[index-1];
@@ -243,7 +255,18 @@ int wordsearch(Worddata *worddata,char path[16],int index,char tiles[16],int sch
   // If we're out of letters, then we've found the word!
   if (index == strlen(word))
   {
-    return(1);
+    this_score = score(worddata,scheme);
+    if (worddata->score < this_score)
+    {
+      copypath(worddata->path,path,index);
+      logindent(index);
+      printf("Found match: ");
+      printpath(worddata->path,tiles,index);
+      logindent(index);
+      printf("Score == %d\n",this_score);
+      worddata->score = this_score;
+    }
+    return(worddata->score);
   } else {
     logindent(index);
     printf("Not done with word.  Looking for the next letter.\n");
@@ -271,13 +294,11 @@ int wordsearch(Worddata *worddata,char path[16],int index,char tiles[16],int sch
     if(repeat == 0)
     {
       path[index] = nexttry;
-      found = wordsearch(worddata,path,index+1,tiles,scheme);
-      if (found > bestscore)
-        bestscore = found;
+      this_score = wordsearch(worddata,path,index+1,tiles,scheme);
       // We do not break here in case a better option is present
     }
   }
-  return(bestscore);
+  return(worddata->score);
 }
 
 
@@ -298,13 +319,7 @@ int find_word_in_board(Worddata *worddata, char *tiles, int scheme)
       found = wordsearch(worddata,path,1,tiles,scheme);
       if (found) 
       {
-        j = 0;
-        while (path[j] >= 0)
-          printf("%c ",tiles[path[j++]]);
-        printf("\n");
-
-        worddata->score = score(worddata,scheme);
-        break;
+        printpath(worddata->path,tiles,strlen(worddata->word));
       }
     }
   }
@@ -426,7 +441,7 @@ int main()
 
   // Print the word list
   printf("\nWord list:\n");
-  printwords(worddata, wordcount,3);
+  printwords(worddata, wordcount,5);
 
   return(0);
 }

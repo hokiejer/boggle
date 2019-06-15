@@ -5,7 +5,7 @@ char letter_scores[26] = {
 };
 
 char standard_boggle_length_bonus[12] = {0,0,1,1,2,3,0,0,0,0,0,0};
-char zynga_length_bonus[12] = {0,0,0,0,0,3,6,10,15,20,0,0};
+char zynga_length_bonus[12] = {0,0,0,0,0,3,6,10,15,20,100,100};
 
 int score(Worddata *worddata,int scheme)
 {
@@ -15,17 +15,13 @@ int score(Worddata *worddata,int scheme)
   switch(scheme)
   {
     case 0:
-      printf("Standard Boggle scheme.\n");
       myscore = standard_boggle_length_bonus[length];
       if (strstr(worddata->word,"q"))
         myscore++;
-      printf("Score == %d\n",worddata->score);
       return myscore;
     case 1:
-      printf("Basic Zynga scheme.\n");
       myscore = score_zynga_no_bonus(worddata);
       myscore += zynga_length_bonus[length];
-      printf("Score == %d\n",worddata->score);
       return myscore;
     default:
       printf("Scheme not found.\n");
