@@ -21,6 +21,37 @@ char neighbors[16][9] = {
 };
 
 
+void printboard(char tiles[16])
+{
+  int i,j;
+
+  printf("Board: \n  ");
+  for(i=0;i<4;i++)
+  {
+    for(j=0;j<4;j++)
+    {
+      printf("%c ",tiles[(4*i)+j]);
+    }
+    printf("\n  ");
+  }
+  printf("\n");
+}
+
+
+void readboard(char board[16])
+{
+  char inchar;
+  int index = 0;
+  while ((inchar = getchar()) != '\n')
+    board[index++] = inchar;
+  while (index < 16)
+  {
+    board[index++] = 'w';
+    printf("index == %d\n",index);
+  }
+}
+
+
 void logindent(int depth)
 {
   int i;
@@ -192,24 +223,7 @@ void prune_wordlist_with_lettercounts(Worddata worddata[MAX], int *wordcount, ch
 }
 
 
-void printboard(char tiles[16])
-{
-  int i,j;
-
-  printf("Board: \n  ");
-  for(i=0;i<4;i++)
-  {
-    for(j=0;j<4;j++)
-    {
-      printf("%c ",tiles[(4*i)+j]);
-    }
-    printf("\n  ");
-  }
-  printf("\n");
-}
-
-
-int wordsearch(Worddata *worddata,char path[16],int index,char tiles[16],int scheme)
+int wordsearch(Worddata *worddata,char path[16],int index,char tiles[16],char bonuses[16],int scheme)
 {
   char *word = worddata->word;
   int neighborindex = 0;
@@ -255,7 +269,7 @@ int wordsearch(Worddata *worddata,char path[16],int index,char tiles[16],int sch
   // If we're out of letters, then we've found the word!
   if (index == strlen(word))
   {
-    this_score = score(worddata,scheme);
+    this_score = score(worddata,path,bonuses,scheme);
     if (worddata->score < this_score)
     {
       copypath(worddata->path,path,index);
@@ -294,7 +308,7 @@ int wordsearch(Worddata *worddata,char path[16],int index,char tiles[16],int sch
     if(repeat == 0)
     {
       path[index] = nexttry;
-      this_score = wordsearch(worddata,path,index+1,tiles,scheme);
+      this_score = wordsearch(worddata,path,index+1,tiles,bonuses,scheme);
       // We do not break here in case a better option is present
     }
   }
@@ -302,7 +316,7 @@ int wordsearch(Worddata *worddata,char path[16],int index,char tiles[16],int sch
 }
 
 
-int find_word_in_board(Worddata *worddata, char *tiles, int scheme)
+int find_word_in_board(Worddata *worddata, char *tiles, char *bonuses, int scheme)
 {
   char path[16];
   int i, j;
@@ -316,7 +330,7 @@ int find_word_in_board(Worddata *worddata, char *tiles, int scheme)
       for(j=0;j<16;j++)
         path[j] = -1;
       path[0] = i;
-      found = wordsearch(worddata,path,1,tiles,scheme);
+      found = wordsearch(worddata,path,1,tiles,bonuses,scheme);
       if (found) 
       {
         printpath(worddata->path,tiles,strlen(worddata->word));
@@ -337,6 +351,7 @@ void prune_wordlist_to_found_words(
   Worddata worddata[MAX], 
   int *wordcount, 
   char tiles[16],
+  char bonuses[16],
   int scheme)
 {
   int index = 0;
@@ -346,7 +361,7 @@ void prune_wordlist_to_found_words(
   {
     printboard(tiles);
     printf("worddata[%d].word == %s\n",i,worddata[i].word);
-    if(find_word_in_board(&(worddata[i]),tiles,scheme))
+    if(find_word_in_board(&(worddata[i]),tiles,bonuses,scheme))
     {
       printf("WORD FOUND IN BOARD: %s (%d)\n",worddata[i].word,worddata[i].score);
       strcpy(worddata[index].word,worddata[i].word);
@@ -384,6 +399,7 @@ int main()
   char words_lettercounts[MAX][26]; // Letter counts per word
   int wordcount = 0;                // Number of words
   char tiles[16];                   // Tile information
+  char bonuses[16];                 // Bonus tile information
   char board_letter_counts[26];     // Letter counts
   int i;                            // Temporary variable
   int scheme = 1;                   // Default to normal Boggle
@@ -400,10 +416,14 @@ int main()
 
   // Read in the tiles
   printf("Input the 16 tiles, left to right, top to bottom\n");
-  for(i=0;i<16;i++) {
-    scanf("%c",&(tiles[i]));
-  }
+  readboard(tiles);
+  printf("Board:\n");
   printboard(tiles);
+  printf("Input the 16 bonus tiles, left to right, top to bottom\n");
+  readboard(bonuses);
+  printf("\nBonuses:\n");
+  printboard(bonuses);
+  printf("\n");
 
   // Generate the letter counts for this board
   for(i=0;i<26;i++) {
@@ -423,7 +443,7 @@ int main()
   printf("Revised word count after considering letter counts = %d\n", wordcount);
 
   // Find the words
-  prune_wordlist_to_found_words(worddata,&wordcount,tiles,scheme);
+  prune_wordlist_to_found_words(worddata,&wordcount,tiles,bonuses,scheme);
   printf("Total words found = %d\n", wordcount);
   printwords(worddata, wordcount,0);
 
@@ -438,6 +458,12 @@ int main()
 
   printf("\nPost U restoration:\n");
   printwords(worddata, wordcount,0);
+
+  printf("Board:\n");
+  printboard(tiles);
+  printf("\nBonuses:\n");
+  printboard(bonuses);
+  printf("\n");
 
   // Print the word list
   printf("\nWord list:\n");
