@@ -140,6 +140,22 @@ void printwords(Worddata worddata[MAX], int wordcount, int spacer)
 }
 
 
+void rprintwords(Worddata worddata[MAX], int wordcount, int spacer)
+{
+  int i;
+
+  for(i=wordcount-1;i>=0;i--) {
+    printf("%s  (%d)\n",worddata[i].word,worddata[i].score);
+    if (spacer > 0)
+    {
+      if (i % spacer == 0)
+        getchar();
+    }
+  }
+  printf("\n");
+}
+
+
 int readwords(Worddata worddata[MAX]) 
 {
   FILE *fp;
@@ -364,7 +380,7 @@ void prune_wordlist_to_found_words(
     if(find_word_in_board(&(worddata[i]),tiles,bonuses,scheme))
     {
       printf("WORD FOUND IN BOARD: %s (%d)\n",worddata[i].word,worddata[i].score);
-      strcpy(worddata[index].word,worddata[i].word);
+      memcpy((void *) &(worddata[index]),(void *) &(worddata[i]),sizeof(Worddata));
       worddata[index++].score = worddata[i].score;
     }
   }
@@ -390,6 +406,41 @@ static int compare_scores(const void *a, const void *b)
 void sort(Worddata worddata[MAX], int wordcount)
 {
   qsort(worddata,wordcount,sizeof(Worddata),compare_scores); 
+}
+
+
+void rprint_by_word_patterns( Worddata worddata[MAX], int wordcount) 
+{
+  int parent = 0;
+  int index = 0;
+  int i, j;
+  char found[MAX];
+
+  printf("==Wordcount == %d\n",wordcount);
+  for(i=0;i<wordcount;i++)
+    found[i] = 0;
+
+  for(parent=wordcount-1;parent>=0;parent--)
+  {
+    if (!found[parent])
+    {
+      for(i=parent;i>=0;i--)
+      {
+        if (!found[i] && 
+            (strlen(worddata[i].word) > 3) &&
+            (strlen(worddata[parent].word) > 3) &&
+            (worddata[parent].path[0] == worddata[i].path[0]) &&
+            (worddata[parent].path[1] == worddata[i].path[1]) &&
+            (worddata[parent].path[2] == worddata[i].path[2]) &&
+            (worddata[parent].path[3] == worddata[i].path[3]))
+        {
+          printf("%s  (%d)\n",worddata[i].word,worddata[i].score);
+          found[i] = 1;
+        }
+      }
+      getchar();
+    }
+  }
 }
 
 
@@ -467,7 +518,8 @@ int main()
 
   // Print the word list
   printf("\nWord list:\n");
-  printwords(worddata, wordcount,5);
+  rprint_by_word_patterns(worddata, wordcount);
+  //rprintwords(worddata, wordcount,3);
 
   return(0);
 }

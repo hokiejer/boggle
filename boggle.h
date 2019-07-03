@@ -2,10 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX 66000
+#define MAX 100000
 
 struct Worddata {
-  char word[32];
+  char word[16];
   int score;
   char path[16];
 };

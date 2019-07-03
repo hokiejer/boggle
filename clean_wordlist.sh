@@ -9,6 +9,7 @@
 cat wordlist.original | \
   grep -v '[^a-z]' | \
   grep -v '[èéâóû]' | \
+  grep -v '[a-z][a-z][a-z][a-z][a-z][a-z][a-z][a-z][a-z][a-z][a-z][a-z][a-z][a-z]' | \
   grep -v '^[a-z]$' > wordlist.temp
 
 cat << EndOfMessage >> wordlist.temp
