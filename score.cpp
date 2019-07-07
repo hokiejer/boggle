@@ -5,7 +5,7 @@ char letter_scores[26] = {
 };
 
 char standard_boggle_length_bonus[12] = {0,0,1,1,2,3,0,0,0,0,0,0};
-char zynga_length_bonus[12] = {0,0,0,0,0,3,6,10,15,20,100,100};
+char zynga_length_bonus[12] = {0,0,0,0,0,3,6,10,15,20,25,100};
 
 
 int score_zynga_no_bonus(Worddata *worddata,char path[16],char bonuses[16])
